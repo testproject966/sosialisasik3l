@@ -5,96 +5,85 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sosialisasi K3L - ULP Empang</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#182433}
-.container{max-width:600px;margin:auto;padding:16px}
-.header{background:linear-gradient(135deg,#0878f9,#0056c7);color:white;padding:22px;border-radius:18px;margin-bottom:15px;box-shadow:0 5px 18px #0002}
-.header h1{margin:0 0 7px;font-size:24px}.header p{margin:3px 0;opacity:.92}
-.card{background:white;padding:18px;border-radius:18px;margin-bottom:15px;box-shadow:0 3px 14px #0001}
-label{display:block;font-weight:bold;margin:13px 0 6px}
-input,textarea{width:100%;padding:13px;border:1px solid #d5dce5;border-radius:10px;font-size:15px;outline:none}
-input:focus,textarea:focus{border-color:#0878f9}
-textarea{min-height:110px;resize:vertical}
-.unit{background:#eef4fb;color:#345}
-.btn{width:100%;padding:15px;border:0;border-radius:11px;background:#0878f9;color:white;font-weight:bold;font-size:16px;cursor:pointer;margin-top:15px}
-.btn:disabled{background:#9aa8b8;cursor:not-allowed}
-.preview{width:100%;max-height:350px;object-fit:cover;border-radius:12px;margin-top:12px;display:none}
-.success,.error,.loading{display:none;padding:14px;border-radius:10px;margin-top:15px;line-height:1.6}
-.success{background:#e8f8ed;color:#18723a}.error{background:#ffeded;color:#a22}.loading{text-align:center;color:#0878f9;font-weight:bold}
-.footer{text-align:center;color:#777;font-size:12px;padding:10px}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#182433}
+.container{max-width:900px;margin:auto;padding:14px}.header{background:linear-gradient(135deg,#0878f9,#0056c7);color:#fff;padding:20px;border-radius:18px;box-shadow:0 5px 18px #0002}
+.header h1{margin:0 0 5px;font-size:24px}.header p{margin:3px 0;opacity:.94}
+.nav{display:flex;gap:8px;overflow:auto;margin:12px 0}.nav button{border:0;background:#fff;padding:11px 14px;border-radius:12px;font-weight:bold;white-space:nowrap;cursor:pointer}.nav button.active{background:#0878f9;color:#fff}
+.page{display:none}.page.active{display:block}.card{background:#fff;padding:17px;border-radius:17px;margin-bottom:13px;box-shadow:0 3px 14px #0001}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{padding:15px;border-radius:14px;background:#f7f9fc}.stat .n{font-size:28px;font-weight:800}.stat .l{font-size:12px;color:#687584;margin-top:4px}
+label{display:block;font-weight:bold;margin:12px 0 6px}input,textarea,select{width:100%;padding:12px;border:1px solid #d5dce5;border-radius:10px;font-size:15px}textarea{min-height:105px;resize:vertical}.unit{background:#eef4fb}.btn{width:100%;padding:14px;border:0;border-radius:11px;background:#0878f9;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;margin-top:13px}.btn.secondary{background:#eef4fb;color:#075bbd}.btn:disabled{background:#9aa8b8}.preview{width:100%;max-height:330px;object-fit:cover;border-radius:12px;margin-top:10px;display:none}.success,.error,.loading{display:none;padding:13px;border-radius:10px;margin-top:12px;line-height:1.5}.success{background:#e8f8ed;color:#18723a}.error{background:#ffeded;color:#a22}.loading{text-align:center;color:#0878f9;font-weight:bold}
+.filters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{padding:10px;border-bottom:1px solid #e5e9ee;text-align:left;vertical-align:top}.table th{background:#f6f8fb;white-space:nowrap}.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#e7f7ed;color:#17743a;font-weight:bold;font-size:11px}.empty{text-align:center;color:#777;padding:25px}.barrow{margin:9px 0}.barlabel{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}.bar{height:9px;background:#e9eef4;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:#0878f9}
+@media(max-width:650px){.grid{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:1fr}.header h1{font-size:21px}}
 </style>
 </head>
 <body>
 <div class="container">
-<div class="header">
-<h1>⚡ Sosialisasi K3L</h1>
-<p>Pelaporan Sosialisasi Bahaya Listrik</p>
-<p>PLN ULP Empang</p>
+<div class="header"><h1>⚡ Sosialisasi K3L</h1><p>PLN ULP Empang</p><p>Pelaporan & Rekap Sosialisasi Bahaya Listrik</p></div>
+<div class="nav">
+<button id="navDash" class="active" onclick="showPage('dashboard')">📊 Dashboard</button>
+<button id="navInput" onclick="showPage('input')">📝 Input Laporan</button>
+<button id="navHistory" onclick="showPage('history')">📋 Riwayat</button>
 </div>
+
+<section id="dashboard" class="page active">
+<div class="grid">
+<div class="stat"><div class="n" id="sTotal">0</div><div class="l">TOTAL LAPORAN</div></div>
+<div class="stat"><div class="n" id="sToday">0</div><div class="l">HARI INI</div></div>
+<div class="stat"><div class="n" id="sMonth">0</div><div class="l">BULAN INI</div></div>
+<div class="stat"><div class="n" id="sPetugas">0</div><div class="l">PETUGAS</div></div>
+</div>
+<div class="card"><b>📈 Rekap Petugas</b><div id="petugasChart" style="margin-top:10px"></div></div>
+<div class="card"><b>📍 Rekap Lokasi</b><div id="lokasiChart" style="margin-top:10px"></div></div>
+<div class="card"><b>🕘 Laporan Terbaru</b><div class="tablewrap" id="recent"></div></div>
+<button class="btn secondary" onclick="loadDashboard()">🔄 Refresh Dashboard</button>
+</section>
+
+<section id="input" class="page">
 <div class="card">
-<label>Nama Petugas *</label>
-<input id="nama" type="text" placeholder="Masukkan nama petugas">
-<label>Unit</label>
-<input class="unit" type="text" value="ULP Empang" disabled>
-<label>Lokasi Kegiatan *</label>
-<input id="lokasi" type="text" placeholder="Contoh: Kantor Desa Empang">
-<label>Keterangan Sosialisasi *</label>
-<textarea id="ket" placeholder="Tuliskan materi/keterangan sosialisasi"></textarea>
-<label>Foto Dokumentasi *</label>
-<input id="foto" type="file" accept="image/*" capture="environment">
+<label>Nama Petugas *</label><input id="nama" placeholder="Masukkan nama petugas">
+<label>Unit</label><input class="unit" value="ULP Empang" disabled>
+<label>Lokasi Kegiatan *</label><input id="lokasi" placeholder="Contoh: Kantor Desa Empang">
+<label>Keterangan Sosialisasi *</label><textarea id="ket" placeholder="Tuliskan materi/keterangan sosialisasi"></textarea>
+<label>Foto Dokumentasi *</label><input id="foto" type="file" accept="image/*" capture="environment">
 <img id="preview" class="preview">
 <div id="loading" class="loading">⏳ Mengirim laporan...</div>
-<div id="success" class="success"></div>
-<div id="error" class="error"></div>
-<button id="btn" class="btn" onclick="kirimLaporan()">📤 KIRIM LAPORAN</button>
+<div id="success" class="success"></div><div id="error" class="error"></div>
+<button id="sendBtn" class="btn" onclick="sendReport()">📤 KIRIM LAPORAN</button>
 </div>
-<div class="footer">Sistem Sosialisasi K3L<br>PLN ULP Empang</div>
+</section>
+
+<section id="history" class="page">
+<div class="card">
+<div class="filters">
+<input id="search" placeholder="🔎 Cari nama/lokasi/keterangan" oninput="renderHistory()">
+<input id="dateFilter" type="date" onchange="renderHistory()">
+<select id="statusFilter" onchange="renderHistory()"><option value="">Semua Status</option><option value="DONE">DONE</option></select>
 </div>
+<div style="display:flex;gap:8px;margin-top:10px">
+<button class="btn secondary" onclick="loadReports()">🔄 Refresh</button>
+<button class="btn secondary" onclick="exportCSV()">⬇️ Export CSV</button>
+</div>
+<div class="tablewrap" id="historyTable" style="margin-top:12px"></div>
+</div>
+</section>
+<div class="footer" style="text-align:center;color:#777;font-size:12px;padding:10px">Sistem Sosialisasi K3L • PLN ULP Empang</div>
+</div>
+
 <script>
-let selectedFile=null;
-document.getElementById('foto').addEventListener('change',function(e){
- selectedFile=e.target.files[0];
- if(!selectedFile)return;
- const reader=new FileReader();
- reader.onload=function(x){const p=document.getElementById('preview');p.src=x.target.result;p.style.display='block'};
- reader.readAsDataURL(selectedFile);
-});
-function kirimLaporan(){
- const nama=document.getElementById('nama').value.trim();
- const lokasi=document.getElementById('lokasi').value.trim();
- const keterangan=document.getElementById('ket').value.trim();
- const error=document.getElementById('error');
- const success=document.getElementById('success');
- const loading=document.getElementById('loading');
- const button=document.getElementById('btn');
- error.style.display='none';success.style.display='none';
- if(!nama)return tampilError('Nama Petugas wajib diisi.');
- if(!lokasi)return tampilError('Lokasi kegiatan wajib diisi.');
- if(!keterangan)return tampilError('Keterangan wajib diisi.');
- if(!selectedFile)return tampilError('Foto dokumentasi wajib diambil/dipilih.');
- button.disabled=true;loading.style.display='block';
- const reader=new FileReader();
- reader.onload=function(e){
-  google.script.run.withSuccessHandler(function(result){
-   loading.style.display='none';button.disabled=false;
-   success.innerHTML='✅ <b>Laporan berhasil dikirim!</b><br><br>ID Laporan: <b>'+result.id+'</b><br>Hari: '+result.hari+'<br>Tanggal: '+result.tanggal+'<br>Jam: '+result.jam+'<br>Status: <b>'+result.status+'</b>';
-   success.style.display='block';
-   document.getElementById('nama').value='';
-   document.getElementById('lokasi').value='';
-   document.getElementById('ket').value='';
-   document.getElementById('foto').value='';
-   document.getElementById('preview').style.display='none';
-   selectedFile=null;
-  }).withFailureHandler(function(err){
-   loading.style.display='none';button.disabled=false;
-   tampilError(err.message||'Gagal mengirim laporan.');
-  }).saveReport({nama:nama,lokasi:lokasi,keterangan:keterangan,photoBase64:e.target.result,mimeType:selectedFile.type||'image/jpeg'});
- };
- reader.readAsDataURL(selectedFile);
-}
-function tampilError(message){
- const error=document.getElementById('error');error.textContent='❌ '+message;error.style.display='block';
-}
+let reports=[];let selectedFile=null;
+document.getElementById('foto').addEventListener('change',function(e){selectedFile=e.target.files[0];if(!selectedFile)return;const r=new FileReader();r.onload=x=>{const p=document.getElementById('preview');p.src=x.target.result;p.style.display='block'};r.readAsDataURL(selectedFile)});
+function showPage(page){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(page).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.getElementById('nav'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');if(page==='dashboard')loadDashboard();if(page==='history')loadReports()}
+function loadDashboard(){google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(showError).getDashboardData()}
+function renderDashboard(d){document.getElementById('sTotal').textContent=d.total;document.getElementById('sToday').textContent=d.today;document.getElementById('sMonth').textContent=d.month;document.getElementById('sPetugas').textContent=d.petugas;drawBars('petugasChart',d.byPetugas);drawBars('lokasiChart',d.byLokasi);reports=d.recent||[];document.getElementById('recent').innerHTML=tableHTML(reports)}
+function drawBars(id,obj){const el=document.getElementById(id);const entries=Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);if(!entries.length){el.innerHTML='<div class="empty">Belum ada data.</div>';return}const max=entries[0][1];el.innerHTML=entries.map(x=>'<div class="barrow"><div class="barlabel"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></div><div class="bar"><i style="width:'+Math.max(5,(x[1]/max)*100)+'%"></i></div></div>').join('')}
+function tableHTML(rows){if(!rows||!rows.length)return '<div class="empty">Belum ada laporan.</div>';return '<table class="table"><thead><tr><th>ID</th><th>Tanggal/Jam</th><th>Petugas</th><th>Lokasi</th><th>Keterangan</th><th>Status</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.id)+'</td><td>'+esc(r.tanggal)+'<br>'+esc(r.jam)+'</td><td>'+esc(r.nama)+'</td><td>'+esc(r.lokasi)+'</td><td>'+esc(r.keterangan)+(r.foto?'<br><a href="'+esc(r.foto)+'" target="_blank">📷 Foto</a>':'')+'</td><td><span class="badge">'+esc(r.status||'DONE')+'</span></td></tr>').join('')+'</tbody></table>'}
+function loadReports(){google.script.run.withSuccessHandler(function(r){reports=r||[];renderHistory()}).withFailureHandler(showError).getReports()}
+function renderHistory(){let q=(document.getElementById('search').value||'').toLowerCase();let date=document.getElementById('dateFilter').value;let status=document.getElementById('statusFilter').value;let rows=reports.filter(r=>{let text=(r.nama+' '+r.lokasi+' '+r.keterangan).toLowerCase();let dateOk=!date||r.tanggal===date.split('-').reverse().join('-');return (!q||text.includes(q))&&dateOk&&(!status||r.status===status)});document.getElementById('historyTable').innerHTML=tableHTML(rows)}
+function sendReport(){const nama=document.getElementById('nama').value.trim(),lokasi=document.getElementById('lokasi').value.trim(),keterangan=document.getElementById('ket').value.trim(),err=document.getElementById('error'),ok=document.getElementById('success'),load=document.getElementById('loading'),btn=document.getElementById('sendBtn');err.style.display='none';ok.style.display='none';if(!nama)return showError({message:'Nama Petugas wajib diisi.'});if(!lokasi)return showError({message:'Lokasi kegiatan wajib diisi.'});if(!keterangan)return showError({message:'Keterangan wajib diisi.'});if(!selectedFile)return showError({message:'Foto dokumentasi wajib diisi.'});btn.disabled=true;load.style.display='block';const reader=new FileReader();reader.onload=e=>google.script.run.withSuccessHandler(r=>{load.style.display='none';btn.disabled=false;ok.innerHTML='✅ <b>Laporan berhasil dikirim!</b><br>ID: <b>'+r.id+'</b> • '+r.hari+', '+r.tanggal+' • '+r.jam+'<br>Status: <b>'+r.status+'</b>';ok.style.display='block';document.getElementById('nama').value='';document.getElementById('lokasi').value='';document.getElementById('ket').value='';document.getElementById('foto').value='';document.getElementById('preview').style.display='none';selectedFile=null;loadDashboard()}).withFailureHandler(e=>{load.style.display='none';btn.disabled=false;showError(e)}).saveReport({nama:nama,lokasi:lokasi,keterangan:keterangan,photoBase64:e.target.result,mimeType:selectedFile.type||'image/jpeg'});reader.readAsDataURL(selectedFile)}
+function showError(e){const x=document.getElementById('error');x.textContent='❌ '+(e.message||e);x.style.display='block'}
+function exportCSV(){if(!reports.length)return alert('Belum ada data.');const head=['ID','Timestamp','Nama Petugas','Unit','Hari','Tanggal','Jam','Lokasi','Keterangan','Foto URL','Status'];const rows=reports.map(r=>[r.id,r.timestamp,r.nama,r.unit,r.hari,r.tanggal,r.jam,r.lokasi,r.keterangan,r.foto,r.status]);const csv=[head,...rows].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Rekap_Sosialisasi_K3L.csv';a.click();URL.revokeObjectURL(a.href)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+loadDashboard();
 </script>
 </body>
 </html>
