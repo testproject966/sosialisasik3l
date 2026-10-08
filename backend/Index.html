@@ -34,7 +34,7 @@ textarea{min-height:110px;resize:vertical}
 .mainBtn:disabled{background:#9fb5aa}
 .notice{display:none;padding:12px;border-radius:11px;margin-top:11px;font-size:13px;line-height:1.5}.ok{background:#eaf8f0;color:#17733c;border:1px solid #ccebd7}.err{background:#fff0f0;color:#a22;border:1px solid #ffd5d5}.loading{background:#f1f7ff;color:#1769bd;border:1px solid #d7e9fb;text-align:center}
 .page{display:none}.page.active{display:block}
-.adminNav{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.adminNav{display:none;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .adminNav button{border:1px solid #dce5ef;background:#fff;border-radius:12px;padding:11px;font-weight:800;color:#30435b;cursor:pointer}.adminNav button.active{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border-color:transparent}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#fff;border:1px solid #e3eaf2;border-radius:15px;padding:15px}.stat .n{font-size:28px;font-weight:900;color:#0868d1}.stat .l{font-size:10px;color:var(--muted);font-weight:800;margin-top:4px}
 .barrow{margin:10px 0}.barlabel{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}.bar{height:9px;background:#e8eef4;border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#0878f9,#54a6ff)}
@@ -58,6 +58,7 @@ textarea{min-height:110px;resize:vertical}
 <div id="adminNav" class="adminNav">
   <button id="navDashboard" class="active" onclick="showPage('dashboard')">📊 Dashboard</button>
   <button id="navHistory" onclick="showPage('history')">📋 Riwayat</button>
+  <button onclick="refreshAdmin()">🔄 Refresh</button>
   <button onclick="logoutAdmin()">🚪 Logout</button>
 </div>
 
@@ -108,7 +109,10 @@ textarea{min-height:110px;resize:vertical}
   <div id="loading" class="notice loading">⏳ Mengirim laporan...</div>
   <div id="success" class="notice ok"></div>
   <div id="error" class="notice err"></div>
-  <button id="sendBtn" class="mainBtn" onclick="sendReport()">✅ SIMPAN LAPORAN</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+    <button id="sendBtn" class="mainBtn" style="margin-top:0" onclick="sendReport()">✅ SIMPAN LAPORAN</button>
+    <button type="button" class="secondary" style="margin-top:0" onclick="refreshPetugas()">🔄 REFRESH</button>
+  </div>
 </div>
 </section>
 
@@ -332,6 +336,20 @@ async function setFile(file){
 document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.target.files[0]));
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
 
+function refreshPetugas(){
+  const btn=event&&event.currentTarget;
+  if(btn){btn.disabled=true;btn.textContent='⏳ MEMUAT...';}
+  setTimeout(function(){location.reload();},250);
+}
+function refreshAdmin(){
+  if(!adminToken){showLogin();return;}
+  const active=document.querySelector('.page.active');
+  if(active&&active.id==='history'){
+    loadReports();
+  }else{
+    showPage('dashboard');
+  }
+}
 function showLogin(){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.getElementById('login').classList.add('active');
