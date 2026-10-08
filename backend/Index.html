@@ -28,12 +28,29 @@ label{display:block;font-weight:750;margin:13px 0 7px;font-size:13px;color:#2638
 <div class="container">
 <div class="header"><h1>⚡ Sosialisasi K3L</h1><p>PLN ULP Empang</p><p>Pelaporan & Rekap Sosialisasi Bahaya Listrik</p></div>
 <div class="nav">
-<button id="navDash" class="active" onclick="showPage('dashboard')">📊 Dashboard</button>
-<button id="navInput" onclick="showPage('input')">📝 Input Laporan</button>
-<button id="navHistory" onclick="showPage('history')">📋 Riwayat</button>
+<button id="navInput" class="active" onclick="showPage('input')">📝 Input Laporan</button>
+<button id="navDash" style="display:none" onclick="showPage('dashboard')">📊 Dashboard</button>
+<button id="navHistory" style="display:none" onclick="showPage('history')">📋 Riwayat</button>
+<button id="navLogin" onclick="showLogin()">🔐 Login Admin</button>
+<button id="navLogout" style="display:none" onclick="logoutAdmin()">🚪 Logout</button>
 </div>
 
-<section id="dashboard" class="page active">
+<section id="login" class="page">
+<div class="card" style="max-width:430px;margin:20px auto">
+<h2 style="margin:0 0 6px">🔐 Login Admin</h2>
+<div style="font-size:13px;color:#6b7a90;margin-bottom:15px">Dashboard dan Riwayat hanya dapat diakses Admin.</div>
+<label>Username</label>
+<input id="adminUsername" autocomplete="username" placeholder="Username">
+<label>Password</label>
+<input id="adminPassword" type="password" autocomplete="current-password" placeholder="Password">
+<div id="loginLoading" class="loading">⏳ Memverifikasi login Admin...</div>
+<div id="loginError" class="error"></div>
+<button id="loginBtn" class="btn" onclick="loginAdmin()">🔑 LOGIN ADMIN</button>
+<button class="btn secondary" onclick="showPage('input')">← Kembali</button>
+</div>
+</section>
+
+<section id="dashboard" class="page">
 <div class="grid">
 <div class="stat"><div class="n" id="sTotal">0</div><div class="l">TOTAL LAPORAN</div></div>
 <div class="stat"><div class="n" id="sToday">0</div><div class="l">HARI INI</div></div>
@@ -90,12 +107,84 @@ label{display:block;font-weight:750;margin:13px 0 7px;font-size:13px;color:#2638
 <script>
 let reports=[];let selectedFile=null;
 document.getElementById('foto').addEventListener('change',function(e){selectedFile=e.target.files[0];if(!selectedFile)return;const r=new FileReader();r.onload=x=>{const p=document.getElementById('preview');p.src=x.target.result;p.style.display='block'};r.readAsDataURL(selectedFile)});
-function showPage(page){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(page).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.getElementById('nav'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');if(page==='dashboard')loadDashboard();if(page==='history')loadReports()}
-function loadDashboard(){google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(showError).getDashboardData()}
+let adminToken='';
+function showLogin(){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('login').classList.add('active');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  document.getElementById('navLogin').classList.add('active');
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('adminPassword').focus();
+}
+function showPage(page){
+  if((page==='dashboard'||page==='history')&&!adminToken){showLogin();return}
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  const b=document.getElementById('nav'+page.charAt(0).toUpperCase()+page.slice(1));
+  if(b)b.classList.add('active');
+  if(page==='dashboard')loadDashboard();
+  if(page==='history')loadReports();
+}
+function loginAdmin(){
+  const u=document.getElementById('adminUsername').value.trim();
+  const p=document.getElementById('adminPassword').value;
+  const err=document.getElementById('loginError');
+  const load=document.getElementById('loginLoading');
+  const btn=document.getElementById('loginBtn');
+  err.style.display='none';
+  if(!u)return showLoginError('Username wajib diisi.');
+  if(!p)return showLoginError('Password wajib diisi.');
+  btn.disabled=true;load.style.display='block';
+  google.script.run
+    .withSuccessHandler(function(r){
+      btn.disabled=false;load.style.display='none';
+      if(!r||!r.ok)return showLoginError('Login admin gagal.');
+      adminToken=r.token;
+      document.getElementById('navDash').style.display='';
+      document.getElementById('navHistory').style.display='';
+      document.getElementById('navLogin').style.display='none';
+      document.getElementById('navLogout').style.display='';
+      document.getElementById('adminUsername').value='';
+      document.getElementById('adminPassword').value='';
+      showPage('dashboard');
+    })
+    .withFailureHandler(function(e){
+      btn.disabled=false;load.style.display='none';
+      showLoginError(e&&e.message?e.message:'Gagal menghubungi server Apps Script.');
+    })
+    .loginAdmin(u,p);
+}
+function showLoginError(msg){
+  const e=document.getElementById('loginError');
+  e.textContent='❌ '+msg;e.style.display='block';
+}
+function logoutAdmin(){
+  const token=adminToken;adminToken='';
+  document.getElementById('navDash').style.display='none';
+  document.getElementById('navHistory').style.display='none';
+  document.getElementById('navLogin').style.display='';
+  document.getElementById('navLogout').style.display='none';
+  if(token)google.script.run.logoutAdmin(token);
+  showPage('input');
+}
+function loadDashboard(){
+  if(!adminToken)return;
+  google.script.run.withSuccessHandler(renderDashboard).withFailureHandler(function(e){
+    if(e&&/sesi admin/i.test(e.message||'')){adminToken='';showLogin();return}
+    showError(e);
+  }).getDashboardData(adminToken);
+}
 function renderDashboard(d){document.getElementById('sTotal').textContent=d.total;document.getElementById('sToday').textContent=d.today;document.getElementById('sMonth').textContent=d.month;document.getElementById('sPetugas').textContent=d.petugas;drawBars('petugasChart',d.byPetugas);drawBars('lokasiChart',d.byLokasi);reports=d.recent||[];document.getElementById('recent').innerHTML=tableHTML(reports)}
 function drawBars(id,obj){const el=document.getElementById(id);const entries=Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).slice(0,8);if(!entries.length){el.innerHTML='<div class="empty">Belum ada data.</div>';return}const max=entries[0][1];el.innerHTML=entries.map(x=>'<div class="barrow"><div class="barlabel"><span>'+esc(x[0])+'</span><b>'+x[1]+'</b></div><div class="bar"><i style="width:'+Math.max(5,(x[1]/max)*100)+'%"></i></div></div>').join('')}
 function tableHTML(rows){if(!rows||!rows.length)return '<div class="empty">Belum ada laporan.</div>';return '<table class="table"><thead><tr><th>ID</th><th>Tanggal/Jam</th><th>Petugas</th><th>Lokasi</th><th>Keterangan</th><th>Status</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.id)+'</td><td>'+esc(r.tanggal)+'<br>'+esc(r.jam)+'</td><td>'+esc(r.nama)+'</td><td>'+esc(r.lokasi)+'</td><td>'+esc(r.keterangan)+(r.foto?'<br><a href="'+esc(r.foto)+'" target="_blank">📷 Foto</a>':'')+'</td><td><span class="badge">'+esc(r.status||'DONE')+'</span></td></tr>').join('')+'</tbody></table>'}
-function loadReports(){google.script.run.withSuccessHandler(function(r){reports=r||[];renderHistory()}).withFailureHandler(showError).getReports()}
+function loadReports(){
+  if(!adminToken)return;
+  google.script.run.withSuccessHandler(function(r){reports=r||[];renderHistory()}).withFailureHandler(function(e){
+    if(e&&/sesi admin/i.test(e.message||'')){adminToken='';showLogin();return}
+    showError(e);
+  }).getReports(adminToken);
+}
 function dateKey(s){if(!s)return '';let p=String(s).split('-');return p.length===3?p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'):String(s)}
 function renderHistory(){let q=(document.getElementById('search').value||'').toLowerCase();let from=document.getElementById('dateFrom').value;let to=document.getElementById('dateTo').value;let status=document.getElementById('statusFilter').value;if(from&&to&&from>to){document.getElementById('historyTable').innerHTML='<div class="empty">⚠️ Tanggal mulai tidak boleh lebih besar dari tanggal sampai.</div>';return}let rows=reports.filter(r=>{let text=(r.nama+' '+r.lokasi+' '+r.keterangan).toLowerCase();let d=dateKey(r.tanggal);let dateOk=(!from||d>=from)&&(!to||d<=to);return (!q||text.includes(q))&&dateOk&&(!status||r.status===status)});document.getElementById('historyTable').innerHTML=tableHTML(rows);let old=document.getElementById('historyCount');if(old)old.remove();let info=document.createElement('div');info.id='historyCount';info.style='margin-top:10px;text-align:right;font-size:12px;color:#6b7a90;font-weight:700';info.textContent='Menampilkan '+rows.length+' laporan';document.getElementById('historyTable').after(info)}
 function resetHistoryFilter(){document.getElementById('search').value='';document.getElementById('dateFrom').value='';document.getElementById('dateTo').value='';document.getElementById('statusFilter').value='';renderHistory()}
@@ -103,7 +192,7 @@ function sendReport(){const nama=document.getElementById('nama').value.trim(),un
 function showError(e){const x=document.getElementById('error');x.textContent='❌ '+(e.message||e);x.style.display='block'}
 function exportCSV(){if(!reports.length)return alert('Belum ada data.');const head=['ID','Timestamp','Nama Petugas','Unit','Hari','Tanggal','Jam','Lokasi','Keterangan','Foto URL','Status'];const rows=reports.map(r=>[r.id,r.timestamp,r.nama,r.unit,r.hari,r.tanggal,r.jam,r.lokasi,r.keterangan,r.foto,r.status]);const csv=[head,...rows].map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Rekap_Sosialisasi_K3L.csv';a.click();URL.revokeObjectURL(a.href)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-loadDashboard();
+showPage('input');
 </script>
 </body>
 </html>
