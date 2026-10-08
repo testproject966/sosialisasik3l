@@ -1,11 +1,7 @@
 package com.example.sosialisasik3l
 import android.app.Activity
 import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebSettings
-import android.webkit.ValueCallback
+import android.webkit.*
 import android.content.Intent
 import android.net.Uri
 
@@ -13,12 +9,10 @@ class MainActivity: Activity() {
     private lateinit var web: WebView
     private var upload: ValueCallback<Array<Uri>>? = null
     private val FILE_REQ = 1001
-    private val WEB_APP_URL = "PASTE_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE"
-
+    private val WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxuEXZ55Rq1QjkERdSVgd08o2Yf4K_RtJj4y3Zi0PwlYAHK1ag5Q34780xUAgDrEZjp/exec"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        web = WebView(this)
-        setContentView(web)
+        web = WebView(this); setContentView(web)
         web.settings.javaScriptEnabled = true
         web.settings.domStorageEnabled = true
         web.settings.allowFileAccess = true
