@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 hideAppsScriptBanner();
+                startBannerCleaner();
             }
         });
 
