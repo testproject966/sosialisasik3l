@@ -133,7 +133,7 @@ textarea{min-height:110px;resize:vertical}
 <div class="stat"><div class="n" id="sPetugas">0</div><div class="l">PETUGAS</div></div>
 </div>
 <div class="card"><b>📈 Rekap Petugas</b><div id="petugasChart"></div></div>
-<div class="card"><b>📍 Rekap Lokasi</b><div id="lokasiChart"></div></div>
+<div class="card"><b>🏢 Rekap Unit</b><div id="lokasiChart"></div></div>
 <div class="card"><b>🕘 Laporan Terbaru</b><div class="tablewrap" id="recent"></div></div>
 </section>
 
@@ -374,7 +374,7 @@ function renderDashboard(d){
   document.getElementById('sMonth').textContent=d.month;
   document.getElementById('sPetugas').textContent=d.petugas;
   drawBars('petugasChart',d.byPetugas);
-  drawBars('lokasiChart',d.byLokasi);
+  drawBars('lokasiChart',d.byUnit);
   reports=d.recent||[];
   document.getElementById('recent').innerHTML=tableHTML(reports);
 }
