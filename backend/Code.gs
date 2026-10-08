@@ -179,24 +179,24 @@ function getDashboardData(adminToken) {
   const todayReports = reports.filter(r => r.tanggal === today);
   const monthReports = reports.filter(r => String(r.tanggal).slice(3) === month);
   const petugas = [...new Set(reports.map(r => r.nama).filter(Boolean))];
-  const lokasi = [...new Set(reports.map(r => r.lokasi).filter(Boolean))];
-  const byPetugas = {}, byTanggal = {}, byLokasi = {};
+  const unit = [...new Set(reports.map(r => r.unit).filter(Boolean))];
+  const byPetugas = {}, byTanggal = {}, byUnit = {};
   reports.forEach(r => {
     byPetugas[r.nama] = (byPetugas[r.nama] || 0) + 1;
     byTanggal[r.tanggal] = (byTanggal[r.tanggal] || 0) + 1;
-    byLokasi[r.lokasi] = (byLokasi[r.lokasi] || 0) + 1;
+    byUnit[r.unit] = (byUnit[r.unit] || 0) + 1;
   });
   return {
     total: reports.length,
     today: todayReports.length,
     month: monthReports.length,
     petugas: petugas.length,
-    lokasi: lokasi.length,
+    unit: unit.length,
     done: reports.filter(r => r.status === 'DONE').length,
     recent: reports.slice(-10).reverse(),
     byPetugas: byPetugas,
     byTanggal: byTanggal,
-    byLokasi: byLokasi
+    byUnit: byUnit
   };
 }
 
