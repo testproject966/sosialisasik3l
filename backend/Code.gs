@@ -1,6 +1,7 @@
 const SPREADSHEET_ID = '1W-gTVnlCTgEDYyC_dHJnnhxi8SAXcTu-TPvwHejRekY';
 const UNIT = 'ULP Empang';
 const SHEET_NAME = 'Laporan_Sosialisasi';
+const GITHUB_INDEX_URL = 'https://raw.githubusercontent.com/testproject966/sosialisasik3l/main/backend/Index.html';
 
 const HEADERS = [
   'ID','Timestamp','Nama Petugas','Unit','Hari',
@@ -9,7 +10,29 @@ const HEADERS = [
 
 function doGet() {
   ensureDatabase_();
-  return HtmlService.createHtmlOutputFromFile('Index')
+
+  // Sumber tampilan utama berasal dari GitHub.
+  // Jika GitHub sementara tidak dapat diakses, gunakan Index.html lokal sebagai fallback.
+  let html = '';
+  try {
+    const response = UrlFetchApp.fetch(GITHUB_INDEX_URL, {
+      muteHttpExceptions: true,
+      followRedirects: true
+    });
+    if (response.getResponseCode() >= 200 && response.getResponseCode() < 300) {
+      html = response.getContentText();
+    }
+  } catch (e) {
+    console.log('Gagal mengambil Index.html dari GitHub: ' + e);
+  }
+
+  if (!html) {
+    return HtmlService.createHtmlOutputFromFile('Index')
+      .setTitle('Sosialisasi K3L - ULP Empang')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
+  return HtmlService.createHtmlOutput(html)
     .setTitle('Sosialisasi K3L - ULP Empang')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -66,7 +89,16 @@ function saveReport(data) {
     String(data.lokasi).trim(), String(data.keterangan).trim(), file.getUrl(), 'DONE'
   ]);
 
-  return {ok:true,id:id,unit:String(data.unit).trim(),hari:hari,tanggal:tanggal,jam:jam,status:'DONE',photoUrl:file.getUrl()};
+  return {
+    ok:true,
+    id:id,
+    unit:String(data.unit).trim(),
+    hari:hari,
+    tanggal:tanggal,
+    jam:jam,
+    status:'DONE',
+    photoUrl:file.getUrl()
+  };
 }
 
 function getReports() {
@@ -107,11 +139,16 @@ function getDashboardData() {
     byLokasi[r.lokasi] = (byLokasi[r.lokasi] || 0) + 1;
   });
   return {
-    total: reports.length, today: todayReports.length, month: monthReports.length,
-    petugas: petugas.length, lokasi: lokasi.length,
+    total: reports.length,
+    today: todayReports.length,
+    month: monthReports.length,
+    petugas: petugas.length,
+    lokasi: lokasi.length,
     done: reports.filter(r => r.status === 'DONE').length,
-    recent: reports.slice(-10).reverse(), byPetugas: byPetugas,
-    byTanggal: byTanggal, byLokasi: byLokasi
+    recent: reports.slice(-10).reverse(),
+    byPetugas: byPetugas,
+    byTanggal: byTanggal,
+    byLokasi: byLokasi
   };
 }
 
