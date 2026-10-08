@@ -26,8 +26,12 @@ public class MainActivity extends Activity {
 
     private static final int FILE_REQ = 1001;
     private static final int CAMERA_PERMISSION_REQ = 1002;
+    private static final int LOCATION_PERMISSION_REQ = 1003;
 
     private Uri cameraUri;
+
+    private android.webkit.GeolocationPermissions.Callback geoCallback;
+    private String geoOrigin;
 
     private static final String WEB_APP_URL =
         "https://script.google.com/macros/s/AKfycbxuEXZ55Rq1QjkERdSVgd08o2Yf4K_RtJj4y3Zi0PwlYAHK1ag5Q34780xUAgDrEZjp/exec?embedded=true";
@@ -57,6 +61,7 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        settings.setGeolocationEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
@@ -70,18 +75,44 @@ public class MainActivity extends Activity {
         web.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
         web.setWebViewClient(new WebViewClient() {
-
             @Override
             public void onPageFinished(WebView view, String url) {
-
                 super.onPageFinished(view, url);
-
                 hideAppsScriptBanner();
                 startBannerCleaner();
             }
         });
 
         web.setWebChromeClient(new WebChromeClient() {
+
+            @Override
+            public void onGeolocationPermissionsShowPrompt(
+                    String origin,
+                    android.webkit.GeolocationPermissions.Callback callback) {
+
+                geoOrigin = origin;
+                geoCallback = callback;
+
+                if (android.os.Build.VERSION.SDK_INT < 23 ||
+                    checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    callback.invoke(origin, true, false);
+                    geoCallback = null;
+                    geoOrigin = null;
+                    return;
+                }
+
+                requestPermissions(
+                    new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    },
+                    LOCATION_PERMISSION_REQ
+                );
+            }
 
             @Override
             public boolean onShowFileChooser(
@@ -96,20 +127,7 @@ public class MainActivity extends Activity {
                 upload = callback;
                 cameraUri = null;
 
-                /*
-                 * HTML sekarang mempunyai dua input:
-                 *
-                 * 1. capture="environment" -> kamera
-                 * 2. input file biasa       -> galeri
-                 *
-                 * Android WebView hanya memberikan
-                 * callback yang sama, sehingga kita
-                 * tampilkan chooser yang menyediakan
-                 * Kamera dan Galeri.
-                 */
-
                 try {
-
                     Intent cameraIntent =
                         new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
@@ -145,7 +163,6 @@ public class MainActivity extends Activity {
                         );
 
                         if (android.os.Build.VERSION.SDK_INT >= 29) {
-
                             values.put(
                                 MediaStore.Images.Media.RELATIVE_PATH,
                                 "Pictures/SosialisasiK3L"
@@ -168,23 +185,13 @@ public class MainActivity extends Activity {
                             Intent.FLAG_GRANT_READ_URI_PERMISSION
                         );
 
-                        /*
-                         * ACTION_CHOOSER:
-                         * Android akan memberikan pilihan aplikasi
-                         * yang dapat menangani gambar.
-                         */
                         Intent chooser =
                             Intent.createChooser(
                                 params.createIntent(),
                                 "Pilih Foto"
                             );
 
-                        /*
-                         * Tambahkan kamera sebagai pilihan
-                         * tambahan pada Android yang mendukung.
-                         */
                         if (android.os.Build.VERSION.SDK_INT >= 5) {
-
                             chooser.putExtra(
                                 Intent.EXTRA_INITIAL_INTENTS,
                                 new Intent[]{cameraIntent}
@@ -199,12 +206,7 @@ public class MainActivity extends Activity {
                         return true;
                     }
 
-                    /*
-                     * Jika kamera tidak tersedia,
-                     * buka galeri/file picker.
-                     */
-                    Intent gallery =
-                        params.createIntent();
+                    Intent gallery = params.createIntent();
 
                     startActivityForResult(
                         gallery,
@@ -218,9 +220,7 @@ public class MainActivity extends Activity {
                     cameraUri = null;
 
                     try {
-
-                        Intent gallery =
-                            params.createIntent();
+                        Intent gallery = params.createIntent();
 
                         startActivityForResult(
                             gallery,
@@ -242,11 +242,43 @@ public class MainActivity extends Activity {
         web.loadUrl(WEB_APP_URL);
     }
 
-    /*
-     * Membersihkan banner bawaan Google Apps Script.
-     */
-    private void hideAppsScriptBanner() {
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            String[] permissions,
+            int[] grantResults) {
 
+        super.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        );
+
+        if (requestCode == LOCATION_PERMISSION_REQ &&
+            geoCallback != null &&
+            geoOrigin != null) {
+
+            boolean granted = false;
+
+            for (int result : grantResults) {
+                if (result == PackageManager.PERMISSION_GRANTED) {
+                    granted = true;
+                    break;
+                }
+            }
+
+            geoCallback.invoke(
+                geoOrigin,
+                granted,
+                false
+            );
+
+            geoCallback = null;
+            geoOrigin = null;
+        }
+    }
+
+    private void hideAppsScriptBanner() {
         final String js =
             "(function(){" +
             "function clean(){" +
@@ -266,35 +298,20 @@ public class MainActivity extends Activity {
             "}" +
             "}" +
             "clean();" +
-            "setTimeout(clean,100);" +
-            "setTimeout(clean,300);" +
-            "setTimeout(clean,700);" +
-            "setTimeout(clean,1200);" +
-            "setTimeout(clean,2000);" +
+            "setTimeout(clean,100);setTimeout(clean,300);setTimeout(clean,700);" +
+            "setTimeout(clean,1200);setTimeout(clean,2000);" +
             "})()";
 
-        web.evaluateJavascript(
-            js,
-            value -> {}
-        );
+        web.evaluateJavascript(js, value -> {});
     }
 
     private void startBannerCleaner() {
-
         web.postDelayed(
             new Runnable() {
-
                 @Override
                 public void run() {
-
                     hideAppsScriptBanner();
-
-                    if (web != null) {
-                        web.postDelayed(
-                            this,
-                            1500
-                        );
-                    }
+                    if (web != null) web.postDelayed(this, 1500);
                 }
             },
             200
@@ -307,105 +324,52 @@ public class MainActivity extends Activity {
             int resultCode,
             Intent data) {
 
-        if (requestCode == FILE_REQ &&
-            upload != null) {
+        if (requestCode == FILE_REQ && upload != null) {
 
             Uri[] results = null;
 
             if (resultCode == RESULT_OK) {
 
-                /*
-                 * Jika kamera dipilih, hasil foto berada
-                 * pada cameraUri.
-                 *
-                 * Jika Galeri dipilih, data.getData()
-                 * berisi URI foto yang dipilih.
-                 */
                 if (cameraUri != null &&
-                    (data == null ||
-                     data.getData() == null)) {
+                    (data == null || data.getData() == null)) {
 
-                    results =
-                        new Uri[]{cameraUri};
+                    results = new Uri[]{cameraUri};
 
-                } else if (
-                    data != null &&
-                    data.getData() != null
-                ) {
+                } else if (data != null && data.getData() != null) {
 
-                    results =
-                        new Uri[]{
-                            data.getData()
-                        };
+                    results = new Uri[]{data.getData()};
 
-                } else {
+                } else if (data != null && data.getClipData() != null) {
 
-                    /*
-                     * Beberapa picker mengembalikan
-                     * ClipData.
-                     */
-                    if (
-                        data != null &&
-                        data.getClipData() != null
-                    ) {
+                    int count = data.getClipData().getItemCount();
+                    results = new Uri[count];
 
-                        int count =
-                            data.getClipData().getItemCount();
-
-                        results =
-                            new Uri[count];
-
-                        for (int i = 0; i < count; i++) {
-
-                            results[i] =
-                                data.getClipData()
-                                    .getItemAt(i)
-                                    .getUri();
-                        }
+                    for (int i = 0; i < count; i++) {
+                        results[i] =
+                            data.getClipData().getItemAt(i).getUri();
                     }
                 }
             }
 
-            /*
-             * Jika batal, hapus URI kamera sementara.
-             */
-            if (resultCode != RESULT_OK &&
-                cameraUri != null) {
-
+            if (resultCode != RESULT_OK && cameraUri != null) {
                 try {
-                    getContentResolver()
-                        .delete(
-                            cameraUri,
-                            null,
-                            null
-                        );
-                } catch (Exception ignored) {
-                }
-
+                    getContentResolver().delete(
+                        cameraUri, null, null
+                    );
+                } catch (Exception ignored) {}
                 cameraUri = null;
             }
 
             upload.onReceiveValue(results);
-
             upload = null;
-
-            /*
-             * Jangan menghapus cameraUri sebelum callback
-             * selesai menerima URI.
-             */
             cameraUri = null;
         }
 
-        super.onActivityResult(
-            requestCode,
-            resultCode,
-            data
-        );
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     public void onBackPressed() {
-
         if (web.canGoBack()) {
             web.goBack();
         } else {
