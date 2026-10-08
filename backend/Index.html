@@ -340,9 +340,20 @@ document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.ta
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
 
 function refreshPage(){
-  const base=window.location.href.split('#')[0];
-  const sep=base.indexOf('?')>=0?'&':'?';
-  window.location.href=base+sep+'_refresh='+Date.now();
+  // Apps Script berjalan di iframe sandbox. Reload iframe saja tidak selalu
+  // memuat ulang Web App, jadi arahkan frame teratas dengan user gesture.
+  try{
+    const current=document.referrer || window.location.href;
+    const clean=current.split('#')[0].split('?')[0];
+    const url=clean+'?_refresh='+Date.now();
+    window.top.location.href=url;
+  }catch(e){
+    try{
+      window.open(window.location.href.split('#')[0]+'?_refresh='+Date.now(),'_top');
+    }catch(err){
+      window.location.reload();
+    }
+  }
 }
 function refreshPetugas(){
   refreshPage();
