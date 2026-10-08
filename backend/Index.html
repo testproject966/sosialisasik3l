@@ -234,32 +234,54 @@ async function watermarkPhoto(file, gps){
       : 'GPS Tidak tersedia';
     const accText=gps ? 'Akurasi ±'+Math.round(gps.accuracy)+' m' : 'Akurasi GPS: -';
 
-    const boxH=Math.max(118,Math.round(h*0.16));
+    const boxH=Math.max(150,Math.round(h*0.20));
     const y=h-boxH;
     const grad=ctx.createLinearGradient(0,y,0,h);
-    grad.addColorStop(0,'rgba(0,0,0,0.15)');
-    grad.addColorStop(0.18,'rgba(0,0,0,0.72)');
-    grad.addColorStop(1,'rgba(0,0,0,0.88)');
+    grad.addColorStop(0,'rgba(0,0,0,0.10)');
+    grad.addColorStop(0.16,'rgba(0,0,0,0.72)');
+    grad.addColorStop(1,'rgba(0,0,0,0.90)');
     ctx.fillStyle=grad;
     ctx.fillRect(0,y,w,boxH);
 
     const pad=Math.max(18,Math.round(w*0.022));
-    const titleSize=Math.max(22,Math.round(w*0.027));
-    const textSize=Math.max(17,Math.round(w*0.020));
-    const smallSize=Math.max(14,Math.round(w*0.017));
+    const titleSize=Math.max(21,Math.round(w*0.026));
+    const textSize=Math.max(16,Math.round(w*0.019));
+    const smallSize=Math.max(14,Math.round(w*0.016));
+    const lineGap=Math.max(8,Math.round(textSize*0.42));
 
+    // Watermark identitas di pojok kanan atas.
+    const badgeText='🦺 K3L ULP EMPANG';
+    const badgeFont=Math.max(16,Math.round(w*0.018));
+    ctx.font='800 '+badgeFont+'px Arial';
+    const badgeW=ctx.measureText(badgeText).width+Math.max(24,Math.round(w*0.025));
+    const badgeH=badgeFont+Math.max(18,Math.round(h*0.022));
+    const bx=w-badgeW-Math.max(16,Math.round(w*0.018));
+    const by=Math.max(16,Math.round(h*0.018));
+    ctx.fillStyle='rgba(0,92,70,0.88)';
+    ctx.beginPath();
+    ctx.roundRect(bx,by,badgeW,badgeH,badgeH/2);
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.75)';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(badgeText,bx+Math.max(12,Math.round(w*0.012)),by+badgeFont+Math.max(4,Math.round(h*0.008)));
+
+    // Watermark utama di bagian bawah dengan simbol pada setiap informasi.
     ctx.fillStyle='#ffffff';
     ctx.font='800 '+titleSize+'px Arial';
-    ctx.fillText('SOSIALISASI K3L • PLN ULP EMPANG',pad,y+titleSize+10);
+    ctx.fillText('🦺 SOSIALISASI K3L • PLN ULP EMPANG',pad,y+titleSize+8);
 
     ctx.font='600 '+textSize+'px Arial';
-    ctx.fillText(now.hari+', '+now.tanggal+'   '+now.jam+' WITA',pad,y+titleSize+textSize+23);
+    ctx.fillText('📅 '+now.hari+', '+now.tanggal+'   🕐 '+now.jam+' WITA',
+      pad,y+titleSize+textSize+lineGap+8);
 
-    ctx.font='600 '+textSize+'px Arial';
-    ctx.fillText('GPS: '+gpsText,pad,y+titleSize+textSize*2+36);
+    ctx.fillText('📍 GPS: '+gpsText,
+      pad,y+titleSize+(textSize+lineGap)*2+8);
 
     ctx.font='500 '+smallSize+'px Arial';
-    ctx.fillText(accText+'   •   Lokasi: '+lokasi,pad,y+boxH-smallSize-15);
+    ctx.fillText('🎯 '+accText+'   •   📌 Lokasi: '+lokasi,
+      pad,y+boxH-smallSize-15);
 
     const result=await canvasToFile(canvas,'image/jpeg','K3L_'+Date.now()+'.jpg');
     return {file:result,now:now,gps:gps};
