@@ -3,6 +3,10 @@ package com.example.sosialisasik3l;
 import android.app.Activity;
 import android.os.Bundle;
 import android.content.Intent;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.provider.MediaStore;
+import android.content.ContentValues;
 import android.net.Uri;
 import android.graphics.Color;
 import android.view.View;
@@ -19,6 +23,8 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private ValueCallback<Uri[]> upload;
     private static final int FILE_REQ = 1001;
+    private static final int CAMERA_REQ = 1002;
+    private Uri cameraUri;
 
     private static final String WEB_APP_URL =
         "https://script.google.com/macros/s/AKfycbxuEXZ55Rq1QjkERdSVgd08o2Yf4K_RtJj4y3Zi0PwlYAHK1ag5Q34780xUAgDrEZjp/exec?embedded=true";
@@ -76,10 +82,31 @@ public class MainActivity extends Activity {
                 upload = callback;
 
                 try {
-                    Intent intent = params.createIntent();
-                    startActivityForResult(intent, FILE_REQ);
+                    if (android.os.Build.VERSION.SDK_INT >= 23 &&
+                        checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQ);
+                    }
+
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DISPLAY_NAME, "SosialisasiK3L_" + System.currentTimeMillis() + ".jpg");
+                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                    if (android.os.Build.VERSION.SDK_INT >= 29) {
+                        values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SosialisasiK3L");
+                    }
+                    cameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                    Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+                    camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    if (camera.resolveActivity(getPackageManager()) != null) {
+                        startActivityForResult(camera, FILE_REQ);
+                    } else {
+                        Intent intent = params.createIntent();
+                        startActivityForResult(intent, FILE_REQ);
+                    }
                 } catch (Exception e) {
                     upload = null;
+                    cameraUri = null;
                     return false;
                 }
 
@@ -138,14 +165,16 @@ public class MainActivity extends Activity {
             Intent data) {
 
         if (requestCode == FILE_REQ && upload != null) {
-            Uri[] results =
-                    WebChromeClient.FileChooserParams.parseResult(
-                            resultCode,
-                            data
-                    );
+            Uri[] results = null;
+            if (requestCode == FILE_REQ && resultCode == RESULT_OK && cameraUri != null) {
+                results = new Uri[]{cameraUri};
+            } else {
+                results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            }
 
             upload.onReceiveValue(results);
             upload = null;
+            cameraUri = null;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
