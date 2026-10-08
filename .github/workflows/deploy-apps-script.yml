@@ -28,7 +28,7 @@ jobs:
 
       - name: Configure Apps Script project
         env:
-          APPS_SCRIPT_ID: \${{ secrets.APPS_SCRIPT_ID }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
         run: |
           if [ -z "$APPS_SCRIPT_ID" ]; then
             echo "GitHub Secret APPS_SCRIPT_ID belum diisi."
@@ -43,7 +43,7 @@ jobs:
 
       - name: Restore clasp credentials
         env:
-          CLASPRC_JSON: \${{ secrets.CLASPRC_JSON }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           if [ -z "$CLASPRC_JSON" ]; then
             echo "GitHub Secret CLASPRC_JSON belum diisi."
@@ -57,7 +57,7 @@ jobs:
       - name: Create Apps Script version
         id: version
         run: |
-          OUTPUT=$(clasp version "GitHub \${GITHUB_SHA:0:7}")
+          OUTPUT=$(clasp version "GitHub ${GITHUB_SHA:0:7}")
           echo "$OUTPUT"
           VERSION=$(echo "$OUTPUT" | grep -oE '[0-9]+' | tail -n 1)
           if [ -z "$VERSION" ]; then
@@ -68,8 +68,8 @@ jobs:
 
       - name: Update existing Web App deployment
         env:
-          VERSION: \${{ steps.version.outputs.version }}
-          DEPLOYMENT_ID: \${{ secrets.APPS_SCRIPT_DEPLOYMENT_ID }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_DEPLOYMENT_ID }}
         run: |
           if [ -z "$DEPLOYMENT_ID" ]; then
             echo "GitHub Secret APPS_SCRIPT_DEPLOYMENT_ID belum diisi."
@@ -78,4 +78,4 @@ jobs:
           clasp deploy \
             --deploymentId "$DEPLOYMENT_ID" \
             --versionNumber "$VERSION" \
-            --description "GitHub \${GITHUB_SHA:0:7}"
+            --description "GitHub ${GITHUB_SHA:0:7}"
