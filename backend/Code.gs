@@ -54,6 +54,52 @@ function ensureDatabase_() {
   return sh;
 }
 
+
+// =========================
+// ADMIN AUTHENTICATION
+// =========================
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD_SHA256 = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+const ADMIN_CACHE_SECONDS = 21600;
+
+function sha256_(value) {
+  const bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(value || ''),
+    Utilities.Charset.UTF_8
+  );
+  return bytes.map(function(b) {
+    const v = (b < 0 ? b + 256 : b).toString(16);
+    return v.length === 1 ? '0' + v : v;
+  }).join('');
+}
+
+function loginAdmin(username, password) {
+  if (String(username || '').trim() !== ADMIN_USERNAME ||
+      sha256_(password) !== ADMIN_PASSWORD_SHA256) {
+    throw new Error('Username atau password admin salah.');
+  }
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('ADMIN_TOKEN_' + token, '1', ADMIN_CACHE_SECONDS);
+  return { ok:true, token:token };
+}
+
+function validateAdminToken_(token) {
+  if (!token) throw new Error('Sesi admin tidak ditemukan.');
+  const ok = CacheService.getScriptCache().get('ADMIN_TOKEN_' + token);
+  if (ok !== '1') throw new Error('Sesi admin sudah berakhir. Silakan login kembali.');
+  return true;
+}
+
+function logoutAdmin(token) {
+  if (token) CacheService.getScriptCache().remove('ADMIN_TOKEN_' + token);
+  return { ok:true };
+}
+
+function getUnitList() {
+  return ['KJ Plampang','KJ Maronge','KJ Lape','KJ Labin','KJ Lantung','Kota Empang'];
+}
+
 function saveReport(data) {
   if (!data || !String(data.nama || '').trim()) throw new Error('Nama Petugas wajib diisi.');
   if (!String(data.unit || '').trim()) throw new Error('Unit wajib dipilih.');
@@ -101,7 +147,8 @@ function saveReport(data) {
   };
 }
 
-function getReports() {
+function getReports(adminToken) {
+  validateAdminToken_(adminToken);
   const sh = ensureDatabase_();
   if (sh.getLastRow() < 2) return [];
   const values = sh.getDataRange().getValues();
@@ -122,8 +169,9 @@ function getReports() {
   });
 }
 
-function getDashboardData() {
-  const reports = getReports();
+function getDashboardData(adminToken) {
+  validateAdminToken_(adminToken);
+  const reports = getReports(adminToken);
   const now = new Date();
   const tz = SpreadsheetApp.openById(SPREADSHEET_ID).getSpreadsheetTimeZone() || 'Asia/Makassar';
   const today = Utilities.formatDate(now,tz,'dd-MM-yyyy');
