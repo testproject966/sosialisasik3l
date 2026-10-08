@@ -1,8 +1,100 @@
-<!doctype html><html lang="id"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-body{font-family:Arial;margin:0;background:#f3f6fa;color:#182433}.wrap{max-width:600px;margin:auto;padding:16px}.card{background:#fff;padding:18px;border-radius:18px;margin:12px 0;box-shadow:0 3px 14px #0001}h1{font-size:23px}label{font-weight:bold;display:block;margin:12px 0 6px}input,textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d5dce5;border-radius:10px}textarea{min-height:100px}.btn{width:100%;padding:14px;border:0;border-radius:11px;background:#0878f9;color:white;font-weight:bold;font-size:16px}.ok,.err{display:none;padding:12px;border-radius:10px;margin-top:12px}.ok{background:#e8f8ed;color:#18723a}.err{background:#ffeded;color:#a22}.preview{max-width:100%;border-radius:12px;margin-top:10px;display:none}</style></head><body><div class="wrap">
-<div class="card"><h1>⚡ Sosialisasi Bahaya Listrik</h1><div>PLN ULP Empang</div></div>
-<div class="card"><label>Nama Petugas *</label><input id="nama" placeholder="Nama lengkap"><label>Unit</label><input value="ULP Empang" disabled><label>Lokasi *</label><input id="lokasi" placeholder="Lokasi kegiatan"><label>Keterangan *</label><textarea id="ket" placeholder="Keterangan sosialisasi"></textarea><label>Foto *</label><input id="foto" type="file" accept="image/*" capture="environment"><img id="preview" class="preview"><div id="ok" class="ok"></div><div id="err" class="err"></div><br><button class="btn" onclick="send()">📤 KIRIM LAPORAN</button></div></div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<base target="_top">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sosialisasi K3L - ULP Empang</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#182433}
+.container{max-width:600px;margin:auto;padding:16px}
+.header{background:linear-gradient(135deg,#0878f9,#0056c7);color:white;padding:22px;border-radius:18px;margin-bottom:15px;box-shadow:0 5px 18px #0002}
+.header h1{margin:0 0 7px;font-size:24px}.header p{margin:3px 0;opacity:.92}
+.card{background:white;padding:18px;border-radius:18px;margin-bottom:15px;box-shadow:0 3px 14px #0001}
+label{display:block;font-weight:bold;margin:13px 0 6px}
+input,textarea{width:100%;padding:13px;border:1px solid #d5dce5;border-radius:10px;font-size:15px;outline:none}
+input:focus,textarea:focus{border-color:#0878f9}
+textarea{min-height:110px;resize:vertical}
+.unit{background:#eef4fb;color:#345}
+.btn{width:100%;padding:15px;border:0;border-radius:11px;background:#0878f9;color:white;font-weight:bold;font-size:16px;cursor:pointer;margin-top:15px}
+.btn:disabled{background:#9aa8b8;cursor:not-allowed}
+.preview{width:100%;max-height:350px;object-fit:cover;border-radius:12px;margin-top:12px;display:none}
+.success,.error,.loading{display:none;padding:14px;border-radius:10px;margin-top:15px;line-height:1.6}
+.success{background:#e8f8ed;color:#18723a}.error{background:#ffeded;color:#a22}.loading{text-align:center;color:#0878f9;font-weight:bold}
+.footer{text-align:center;color:#777;font-size:12px;padding:10px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>⚡ Sosialisasi K3L</h1>
+<p>Pelaporan Sosialisasi Bahaya Listrik</p>
+<p>PLN ULP Empang</p>
+</div>
+<div class="card">
+<label>Nama Petugas *</label>
+<input id="nama" type="text" placeholder="Masukkan nama petugas">
+<label>Unit</label>
+<input class="unit" type="text" value="ULP Empang" disabled>
+<label>Lokasi Kegiatan *</label>
+<input id="lokasi" type="text" placeholder="Contoh: Kantor Desa Empang">
+<label>Keterangan Sosialisasi *</label>
+<textarea id="ket" placeholder="Tuliskan materi/keterangan sosialisasi"></textarea>
+<label>Foto Dokumentasi *</label>
+<input id="foto" type="file" accept="image/*" capture="environment">
+<img id="preview" class="preview">
+<div id="loading" class="loading">⏳ Mengirim laporan...</div>
+<div id="success" class="success"></div>
+<div id="error" class="error"></div>
+<button id="btn" class="btn" onclick="kirimLaporan()">📤 KIRIM LAPORAN</button>
+</div>
+<div class="footer">Sistem Sosialisasi K3L<br>PLN ULP Empang</div>
+</div>
 <script>
-let file=null;document.getElementById('foto').onchange=e=>{file=e.target.files[0];if(file){let r=new FileReader();r.onload=x=>{preview.src=x.target.result;preview.style.display='block'};r.readAsDataURL(file)}};
-function send(){ok.style.display='none';err.style.display='none';if(!nama.value.trim()||!lokasi.value.trim()||!ket.value.trim()||!file){err.textContent='Nama, lokasi, keterangan dan foto wajib diisi.';err.style.display='block';return}let r=new FileReader();r.onload=()=>google.script.run.withSuccessHandler(x=>{ok.innerHTML='✅ Laporan berhasil dikirim.<br>'+x.hari+', '+x.tanggal;ok.style.display='block';nama.value='';lokasi.value='';ket.value='';foto.value='';preview.style.display='none';file=null}).withFailureHandler(e=>{err.textContent=e.message;err.style.display='block'}).saveReport({nama:nama.value.trim(),lokasi:lokasi.value.trim(),keterangan:ket.value.trim(),photoBase64:r.result,mimeType:file.type});r.readAsDataURL(file)}
-</script></body></html>
+let selectedFile=null;
+document.getElementById('foto').addEventListener('change',function(e){
+ selectedFile=e.target.files[0];
+ if(!selectedFile)return;
+ const reader=new FileReader();
+ reader.onload=function(x){const p=document.getElementById('preview');p.src=x.target.result;p.style.display='block'};
+ reader.readAsDataURL(selectedFile);
+});
+function kirimLaporan(){
+ const nama=document.getElementById('nama').value.trim();
+ const lokasi=document.getElementById('lokasi').value.trim();
+ const keterangan=document.getElementById('ket').value.trim();
+ const error=document.getElementById('error');
+ const success=document.getElementById('success');
+ const loading=document.getElementById('loading');
+ const button=document.getElementById('btn');
+ error.style.display='none';success.style.display='none';
+ if(!nama)return tampilError('Nama Petugas wajib diisi.');
+ if(!lokasi)return tampilError('Lokasi kegiatan wajib diisi.');
+ if(!keterangan)return tampilError('Keterangan wajib diisi.');
+ if(!selectedFile)return tampilError('Foto dokumentasi wajib diambil/dipilih.');
+ button.disabled=true;loading.style.display='block';
+ const reader=new FileReader();
+ reader.onload=function(e){
+  google.script.run.withSuccessHandler(function(result){
+   loading.style.display='none';button.disabled=false;
+   success.innerHTML='✅ <b>Laporan berhasil dikirim!</b><br><br>ID Laporan: <b>'+result.id+'</b><br>Hari: '+result.hari+'<br>Tanggal: '+result.tanggal+'<br>Jam: '+result.jam+'<br>Status: <b>'+result.status+'</b>';
+   success.style.display='block';
+   document.getElementById('nama').value='';
+   document.getElementById('lokasi').value='';
+   document.getElementById('ket').value='';
+   document.getElementById('foto').value='';
+   document.getElementById('preview').style.display='none';
+   selectedFile=null;
+  }).withFailureHandler(function(err){
+   loading.style.display='none';button.disabled=false;
+   tampilError(err.message||'Gagal mengirim laporan.');
+  }).saveReport({nama:nama,lokasi:lokasi,keterangan:keterangan,photoBase64:e.target.result,mimeType:selectedFile.type||'image/jpeg'});
+ };
+ reader.readAsDataURL(selectedFile);
+}
+function tampilError(message){
+ const error=document.getElementById('error');error.textContent='❌ '+message;error.style.display='block';
+}
+</script>
+</body>
+</html>
