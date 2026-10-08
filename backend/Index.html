@@ -339,20 +339,15 @@ async function setFile(file){
 document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.target.files[0]));
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
 
+const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxuEXZ55Rq1QjkERdSVgd08o2Yf4K_RtJj4y3Zi0PwlYAHK1ag5Q34780xUAgDrEZjp/exec';
 function refreshPage(){
-  // Apps Script berjalan di iframe sandbox. Reload iframe saja tidak selalu
-  // memuat ulang Web App, jadi arahkan frame teratas dengan user gesture.
+  // Navigasi langsung ke URL Web App production agar benar-benar memuat
+  // halaman baru. Tidak bergantung pada reload iframe/cache browser.
+  const url=WEB_APP_URL+'?embedded=true&_refresh='+Date.now();
   try{
-    const current=document.referrer || window.location.href;
-    const clean=current.split('#')[0].split('?')[0];
-    const url=clean+'?_refresh='+Date.now();
-    window.top.location.href=url;
+    window.open(url,'_top');
   }catch(e){
-    try{
-      window.open(window.location.href.split('#')[0]+'?_refresh='+Date.now(),'_top');
-    }catch(err){
-      window.location.reload();
-    }
+    window.location.href=url;
   }
 }
 function refreshPetugas(){
