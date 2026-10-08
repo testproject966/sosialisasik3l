@@ -374,9 +374,23 @@ function renderDashboard(d){
   document.getElementById('sMonth').textContent=d.month;
   document.getElementById('sPetugas').textContent=d.petugas;
   drawBars('petugasChart',d.byPetugas);
-  drawBars('lokasiChart',d.byUnit);
   reports=d.recent||[];
   document.getElementById('recent').innerHTML=tableHTML(reports);
+
+  // Kompatibel dengan deployment backend lama: jika byUnit belum tersedia,
+  // ambil seluruh laporan lalu hitung rekap berdasarkan kolom Unit.
+  if(d.byUnit){
+    drawBars('lokasiChart',d.byUnit);
+  }else{
+    google.script.run.withSuccessHandler(function(allReports){
+      const byUnit={};
+      (allReports||[]).forEach(function(r){
+        const u=String(r.unit||'').trim();
+        if(u) byUnit[u]=(byUnit[u]||0)+1;
+      });
+      drawBars('lokasiChart',byUnit);
+    }).withFailureHandler(serverError).getReports(adminToken);
+  }
 }
 function drawBars(id,obj){
   const el=document.getElementById(id);
