@@ -26,12 +26,27 @@ jobs:
       - name: Install clasp
         run: npm install -g @google/clasp
 
+      - name: Configure Apps Script project
+        env:
+          APPS_SCRIPT_ID: \${{ secrets.APPS_SCRIPT_ID }}
+        run: |
+          if [ -z "$APPS_SCRIPT_ID" ]; then
+            echo "GitHub Secret APPS_SCRIPT_ID belum diisi."
+            exit 1
+          fi
+          cat > .clasp.json <<EOF
+          {
+            "scriptId": "$APPS_SCRIPT_ID",
+            "rootDir": "backend"
+          }
+          EOF
+
       - name: Restore clasp credentials
         env:
           CLASPRC_JSON: \${{ secrets.CLASPRC_JSON }}
         run: |
           if [ -z "$CLASPRC_JSON" ]; then
-            echo "CLASPRC_JSON GitHub Secret belum diisi."
+            echo "GitHub Secret CLASPRC_JSON belum diisi."
             exit 1
           fi
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
@@ -42,29 +57,25 @@ jobs:
       - name: Create Apps Script version
         id: version
         run: |
-          VERSION=$(clasp version "GitHub \${GITHUB_SHA:0:7}" | tail -n 1 | grep -oE '[0-9]+' | tail -n 1)
+          OUTPUT=$(clasp version "GitHub \${GITHUB_SHA:0:7}")
+          echo "$OUTPUT"
+          VERSION=$(echo "$OUTPUT" | grep -oE '[0-9]+' | tail -n 1)
           if [ -z "$VERSION" ]; then
             echo "Gagal mendapatkan nomor versi Apps Script."
-            clasp versions
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Apps Script version: $VERSION"
 
-      - name: Update existing web deployment
+      - name: Update existing Web App deployment
         env:
           VERSION: \${{ steps.version.outputs.version }}
+          DEPLOYMENT_ID: \${{ secrets.APPS_SCRIPT_DEPLOYMENT_ID }}
         run: |
-          DEPLOYMENTS=$(clasp deployments)
-          echo "$DEPLOYMENTS"
-
-          DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | grep -Eo 'AKfy[a-zA-Z0-9_-]+' | head -n 1)
-
           if [ -z "$DEPLOYMENT_ID" ]; then
-            echo "Deployment ID belum ditemukan."
-            echo "Jalankan clasp deployments setelah autentikasi untuk melihat deployment."
+            echo "GitHub Secret APPS_SCRIPT_DEPLOYMENT_ID belum diisi."
             exit 1
           fi
-
-          echo "Menggunakan deployment: $DEPLOYMENT_ID"
-          clasp deploy --deploymentId "$DEPLOYMENT_ID" --versionNumber "$VERSION" --description "GitHub \${GITHUB_SHA:0:7}"
+          clasp deploy \
+            --deploymentId "$DEPLOYMENT_ID" \
+            --versionNumber "$VERSION" \
+            --description "GitHub \${GITHUB_SHA:0:7}"
