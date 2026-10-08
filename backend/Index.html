@@ -340,12 +340,12 @@ document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.ta
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
 
 function refreshPage(){
-  window.location.reload();
+  const base=window.location.href.split('#')[0];
+  const sep=base.indexOf('?')>=0?'&':'?';
+  window.location.href=base+sep+'_refresh='+Date.now();
 }
 function refreshPetugas(){
-  const btn=event&&event.currentTarget;
-  if(btn){btn.disabled=true;btn.textContent='⏳ MEMUAT...';}
-  setTimeout(function(){location.reload();},250);
+  refreshPage();
 }
 function refreshAdmin(){
   if(!adminToken){showLogin();return;}
