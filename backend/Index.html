@@ -52,7 +52,10 @@ textarea{min-height:110px;resize:vertical}
     <div class="logo">🦺</div>
     <div><h1>SOSIALISASI K3L</h1><p>PLN ULP Empang</p><small>Pelaporan & Dokumentasi Bahaya Listrik</small></div>
   </div>
-  <button class="adminTop" onclick="showLogin()">🔐 ADMIN</button>
+  <div style="position:absolute;right:18px;bottom:16px;z-index:2;display:flex;gap:7px">
+    <button class="adminTop" style="position:static" type="button" onclick="refreshPage()">🔄 REFRESH</button>
+    <button class="adminTop" style="position:static" type="button" onclick="showLogin()">🔐 ADMIN</button>
+  </div>
 </header>
 
 <div id="adminNav" class="adminNav">
@@ -336,6 +339,9 @@ async function setFile(file){
 document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.target.files[0]));
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
 
+function refreshPage(){
+  window.location.reload();
+}
 function refreshPetugas(){
   const btn=event&&event.currentTarget;
   if(btn){btn.disabled=true;btn.textContent='⏳ MEMUAT...';}
