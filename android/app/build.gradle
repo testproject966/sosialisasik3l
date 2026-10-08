@@ -1,4 +1,4 @@
 plugins { id 'com.android.application' }
 android { namespace 'com.example.sosialisasik3l'; compileSdk 35
-    defaultConfig { applicationId 'com.example.sosialisasik3l'; minSdk 24; targetSdk 35; versionCode 2; versionName '1.0.6' }
+    defaultConfig { applicationId 'com.example.sosialisasik3l'; minSdk 24; targetSdk 35; versionCode 3; versionName '1.0.7' }
 }
