@@ -270,14 +270,18 @@ async function watermarkPhoto(file, gps){
     // Watermark utama di bagian bawah dengan simbol pada setiap informasi.
     ctx.fillStyle='#ffffff';
     ctx.font='800 '+titleSize+'px Arial';
-    ctx.fillText('🦺 SOSIALISASI K3L • PLN ULP EMPANG',pad,y+Math.round(boxH*0.74));
+    // Watermark utama dibuat rapi, sejajar, dan berada sedikit di atas batas bawah foto.
+    const wmBase=y+boxH-20;
+
+    ctx.fillText('🦺 SOSIALISASI K3L • PLN ULP EMPANG',
+      pad,wmBase-(textSize+lineGap)*2);
 
     ctx.font='600 '+textSize+'px Arial';
     ctx.fillText('📅 '+now.hari+', '+now.tanggal+'   🕐 '+now.jam+' WITA',
-      pad,y+Math.round(boxH*0.58)+textSize+lineGap+5);
+      pad,wmBase-(textSize+lineGap));
 
     ctx.fillText('📍 GPS: '+gpsText,
-      pad,y+Math.round(boxH*0.58)+(textSize+lineGap)*2+5);
+      pad,wmBase);
 
 
 
