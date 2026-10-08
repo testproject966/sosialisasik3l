@@ -44,10 +44,14 @@ public class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+        settings.setSupportZoom(false);
+        settings.setUseWideViewPort(false);
+        settings.setLoadWithOverviewMode(false);
 
         web.setVerticalScrollBarEnabled(false);
         web.setHorizontalScrollBarEnabled(false);
         web.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+        web.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
         web.setWebViewClient(new WebViewClient() {
             @Override
