@@ -158,18 +158,146 @@ textarea{min-height:110px;resize:vertical}
 <script>
 let reports=[];
 let selectedFile=null;
+let originalFile=null;
 let adminToken='';
+let gpsData=null;
+let watermarkReady=false;
 
-function setFile(file){
-  selectedFile=file||null;
-  if(!selectedFile)return;
-  const r=new FileReader();
-  r.onload=function(e){
-    const p=document.getElementById('preview');
-    p.src=e.target.result;
-    p.style.display='block';
+function pad2(n){return String(n).padStart(2,'0')}
+function getNow(){
+  const d=new Date();
+  const hari=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()];
+  return {
+    hari:hari,
+    tanggal:pad2(d.getDate())+'-'+pad2(d.getMonth()+1)+'-'+d.getFullYear(),
+    jam:pad2(d.getHours())+':'+pad2(d.getMinutes())+':'+pad2(d.getSeconds())
   };
-  r.readAsDataURL(selectedFile);
+}
+function getGps(){
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){
+      resolve(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        resolve({
+          lat:pos.coords.latitude,
+          lon:pos.coords.longitude,
+          accuracy:pos.coords.accuracy
+        });
+      },
+      function(){
+        resolve(null);
+      },
+      {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+    );
+  });
+}
+function setPhotoStatus(msg){
+  const el=document.querySelector('.photoText');
+  if(el)el.textContent=msg;
+}
+function canvasToFile(canvas,type,name){
+  return new Promise(function(resolve,reject){
+    canvas.toBlob(function(blob){
+      if(!blob){reject(new Error('Gagal membuat foto watermark.'));return}
+      resolve(new File([blob],name||'foto_k3l.jpg',{type:type||'image/jpeg',lastModified:Date.now()}));
+    },type||'image/jpeg',0.92);
+  });
+}
+async function watermarkPhoto(file, gps){
+  const img=new Image();
+  const url=URL.createObjectURL(file);
+  try{
+    await new Promise(function(resolve,reject){
+      img.onload=resolve;
+      img.onerror=reject;
+      img.src=url;
+    });
+
+    const maxWidth=1600;
+    const scale=Math.min(1,maxWidth/img.naturalWidth);
+    const w=Math.round(img.naturalWidth*scale);
+    const h=Math.round(img.naturalHeight*scale);
+    const canvas=document.createElement('canvas');
+    canvas.width=w;
+    canvas.height=h;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0,w,h);
+
+    const now=getNow();
+    const unit=document.getElementById('unit').value||'ULP Empang';
+    const lokasi=document.getElementById('lokasi').value.trim()||'-';
+    const gpsText=gps
+      ? gps.lat.toFixed(6)+' , '+gps.lon.toFixed(6)
+      : 'GPS Tidak tersedia';
+    const accText=gps ? 'Akurasi ±'+Math.round(gps.accuracy)+' m' : 'Akurasi GPS: -';
+
+    const boxH=Math.max(118,Math.round(h*0.16));
+    const y=h-boxH;
+    const grad=ctx.createLinearGradient(0,y,0,h);
+    grad.addColorStop(0,'rgba(0,0,0,0.15)');
+    grad.addColorStop(0.18,'rgba(0,0,0,0.72)');
+    grad.addColorStop(1,'rgba(0,0,0,0.88)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,y,w,boxH);
+
+    const pad=Math.max(18,Math.round(w*0.022));
+    const titleSize=Math.max(22,Math.round(w*0.027));
+    const textSize=Math.max(17,Math.round(w*0.020));
+    const smallSize=Math.max(14,Math.round(w*0.017));
+
+    ctx.fillStyle='#ffffff';
+    ctx.font='800 '+titleSize+'px Arial';
+    ctx.fillText('SOSIALISASI K3L • PLN ULP EMPANG',pad,y+titleSize+10);
+
+    ctx.font='600 '+textSize+'px Arial';
+    ctx.fillText(now.hari+', '+now.tanggal+'   '+now.jam+' WITA',pad,y+titleSize+textSize+23);
+
+    ctx.font='600 '+textSize+'px Arial';
+    ctx.fillText('GPS: '+gpsText,pad,y+titleSize+textSize*2+36);
+
+    ctx.font='500 '+smallSize+'px Arial';
+    ctx.fillText(accText+'   •   Lokasi: '+lokasi,pad,y+boxH-smallSize-15);
+
+    const result=await canvasToFile(canvas,'image/jpeg','K3L_'+Date.now()+'.jpg');
+    return {file:result,now:now,gps:gps};
+  }finally{
+    URL.revokeObjectURL(url);
+  }
+}
+async function setFile(file){
+  if(!file)return;
+  originalFile=file;
+  selectedFile=null;
+  watermarkReady=false;
+  document.getElementById('sendBtn').disabled=true;
+  setPhotoStatus('⏳ Menyiapkan foto + watermark tanggal, jam & GPS...');
+  gpsData=await getGps();
+
+  try{
+    const result=await watermarkPhoto(file,gpsData);
+    selectedFile=result.file;
+    watermarkReady=true;
+    const r=new FileReader();
+    r.onload=function(e){
+      const p=document.getElementById('preview');
+      p.src=e.target.result;
+      p.style.display='block';
+    };
+    r.readAsDataURL(selectedFile);
+
+    if(gpsData){
+      setPhotoStatus('✅ Watermark lengkap: tanggal, jam, GPS & akurasi GPS.');
+    }else{
+      setPhotoStatus('⚠️ Foto diberi watermark tanggal & jam. GPS tidak tersedia karena izin/lokasi tidak aktif.');
+    }
+    document.getElementById('sendBtn').disabled=false;
+  }catch(err){
+    setPhotoStatus('❌ Gagal membuat watermark foto. Silakan pilih foto lagi.');
+    document.getElementById('sendBtn').disabled=false;
+  }
 }
 document.getElementById('cameraInput').addEventListener('change',e=>setFile(e.target.files[0]));
 document.getElementById('galleryInput').addEventListener('change',e=>setFile(e.target.files[0]));
@@ -273,6 +401,7 @@ function sendReport(){
   if(!lokasi)return showError('Lokasi kegiatan wajib diisi.');
   if(!keterangan)return showError('Keterangan wajib diisi.');
   if(!selectedFile)return showError('Foto dokumentasi wajib diisi.');
+  if(!watermarkReady)return showError('Foto sedang diproses. Tunggu watermark selesai.');
   document.getElementById('sendBtn').disabled=true;
   document.getElementById('loading').style.display='block';
   const reader=new FileReader();
@@ -290,6 +419,10 @@ function sendReport(){
       document.getElementById('galleryInput').value='';
       document.getElementById('preview').style.display='none';
       selectedFile=null;
+      originalFile=null;
+      gpsData=null;
+      watermarkReady=false;
+      setPhotoStatus('Pilih foto dokumentasi. Foto akan diberi watermark tanggal, jam dan GPS.');
     }).withFailureHandler(function(e){
       document.getElementById('loading').style.display='none';
       document.getElementById('sendBtn').disabled=false;
