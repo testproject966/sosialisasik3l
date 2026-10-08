@@ -96,41 +96,34 @@ public class MainActivity extends Activity {
     private void hideAppsScriptBanner() {
         final String js =
             "(function(){" +
-            "var root=document.body;" +
-            "if(!root)return 0;" +
-            "var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);" +
-            "var n;" +
-            "while(n=walker.nextNode()){" +
-            "var t=(n.nodeValue||'').trim();" +
-            "if(t.indexOf('Aplikasi ini dibuat oleh pengguna Google Apps Script')>=0||" +
-            "t.indexOf('This application was created by a Google Apps Script user')>=0){" +
-            "var e=n.parentElement;" +
-            "for(var i=0;e&&i<6;i++,e=e.parentElement){" +
+            "function clean(){" +
+            "var els=document.querySelectorAll('body *');" +
+            "for(var i=0;i<els.length;i++){" +
+            "var e=els[i]; var t=(e.innerText||e.textContent||'').replace(/\\s+/g,' ').trim();" +
+            "if(t.indexOf('Aplikasi ini dibuat oleh pengguna')>=0 || t.indexOf('Google Apps Script')>=0 || t.indexOf('This application was created by a Google Apps Script user')>=0){" +
             "var r=e.getBoundingClientRect();" +
-            "if(r.top<=8&&r.height>20&&r.height<180)return Math.ceil(r.bottom);" +
+            "if(r.top<120 && r.height>20 && r.height<180){" +
+            "e.style.setProperty('display','none','important');" +
+            "e.style.setProperty('visibility','hidden','important');" +
             "}" +
             "}" +
             "}" +
-            "return 0;" +
+            "}" +
+            "clean();" +
+            "setTimeout(clean,100);setTimeout(clean,300);setTimeout(clean,700);setTimeout(clean,1200);setTimeout(clean,2000);" +
+            "return document.body ? document.body.innerText.indexOf('Aplikasi ini dibuat oleh pengguna') : -1;" +
             "})()";
 
-        web.evaluateJavascript(js, value -> {
-            try {
-                if (value == null || value.equals("null")) return;
-                int px = (int) Math.ceil(Double.parseDouble(value));
-                if (px > 0 && px < 180) {
-                    web.post(() -> {
-                        web.setTranslationY(-px);
-                        ViewGroup.LayoutParams p = web.getLayoutParams();
-                        if (p != null) {
-                            p.height = root.getHeight() + px;
-                            web.setLayoutParams(p);
-                        }
-                    });
-                }
-            } catch (Exception ignored) {
+        web.evaluateJavascript(js, value -> {});
+    }
+
+    private void startBannerCleaner() {
+        web.postDelayed(new Runnable() {
+            @Override public void run() {
+                hideAppsScriptBanner();
+                if (web != null) web.postDelayed(this, 1500);
             }
-        });
+        }, 200);
     }
 
     @Override
